@@ -21,7 +21,7 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
   public
   def register
     @socket = UDPSocket.new
-    @codec.on_event do |payload|
+    @codec.on_event do |event, payload|
       @socket.send(payload, 0, @host, @port)
     end
   end

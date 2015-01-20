@@ -8,7 +8,6 @@ require "socket"
 # Keep in mind that UDP will lose messages.
 class LogStash::Outputs::UDP < LogStash::Outputs::Base
   config_name "udp"
-  milestone 1
   
   default :codec, "json"
 

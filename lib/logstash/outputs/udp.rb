@@ -27,10 +27,7 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
 
   def receive(event)
     return unless output?(event)
-    if event == LogStash::SHUTDOWN
-      finished
-      return
-    end
+    return if event == LogStash::SHUTDOWN
     @codec.encode(event)
   end
 

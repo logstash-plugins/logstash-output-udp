@@ -21,12 +21,19 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
   def register
     @socket = UDPSocket.new
     @codec.on_event do |event, payload|
-      @socket.send(payload, 0, @host, @port)
+      begin
+        @socket.send(payload, 0, @host, @port)
+      rescue Errno::EMSGSIZE => e
+        logger.error("Failed to send event, message size of #{payload.size} too long", :error => e.inspect,
+                     :backtrace => e.backtrace.first(10))
+      rescue => e
+        logger.error("Failed to send event:", :error => e.inspect,
+                                              :backtrace => e.backtrace.first(10))
+      end
     end
   end
 
   def receive(event)
-    
     return if event == LogStash::SHUTDOWN
     @codec.encode(event)
   end

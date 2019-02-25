@@ -24,12 +24,25 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
       begin
         @socket.send(payload, 0, @host, @port)
       rescue Errno::EMSGSIZE => e
-        logger.error("Failed to send event, message size of #{payload.size} too long", :error => e.inspect,
-                     :backtrace => e.backtrace.first(10))
+        logger.error("Failed to send event, message size of #{payload.size} too long", error_hash(e, payload))
       rescue => e
-        logger.error("Failed to send event:", :error => e.inspect,
-                                              :backtrace => e.backtrace.first(10))
+        logger.error("Failed to send event:", error_hash(e, payload))
       end
+    end
+  end
+
+  MAX_DEBUG_PAYLOAD = 1000
+
+  def error_hash(error, payload)
+    error_hash = {:error => error.inspect,
+                  :backtrace => error.backtrace.first(10)
+                 }
+    if logger.debug?
+      error_hash.merge(:event_payload =>
+                       payload.length > MAX_DEBUG_PAYLOAD ? "#{payload[0...MAX_DEBUG_PAYLOAD]}...<TRUNCATED>" : payload
+                      )
+    else
+      error_hash
     end
   end
 

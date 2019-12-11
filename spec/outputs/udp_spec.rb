@@ -28,6 +28,37 @@ describe LogStash::Outputs::UDP do
     end
   end
 
+  describe "retries" do
+    let(:event) { LogStash::Event.new("message" => "test") }
+    let(:config) {{ "host" => host, "port" => port}}
+
+    before(:each) do
+      subject.register
+    end
+
+    context "not using :retry_count" do
+      it "should not retry upon send exception by default" do
+        allow(subject.instance_variable_get("@socket")).to receive(:send).once.and_raise(IOError)
+        expect(subject.instance_variable_get("@logger")).to receive(:error).once
+        subject.receive(event)
+      end
+    end
+
+    context "using :retry_count" do
+      let(:backoff) { 10 }
+      let(:retry_count) { 5 }
+      let(:config) {{ "host" => host, "port" => port, "retry_count" => retry_count, "retry_backoff_ms" => backoff}}
+
+      it "should retry upon send exception" do
+        allow(subject.instance_variable_get("@socket")).to receive(:send).exactly(retry_count + 1).times.and_raise(IOError)
+        expect(subject.instance_variable_get("@logger")).to receive(:warn).exactly(retry_count).times
+        expect(subject.instance_variable_get("@logger")).to receive(:error).once
+        expect(subject).to receive(:sleep).with(backoff / 1000.0).exactly(retry_count).times
+        subject.receive(event)
+      end
+    end
+  end
+
   describe "large message" do
     let(:properties) { { "message" => "0" * 65_536 } }
     let(:event)      { LogStash::Event.new(properties) }

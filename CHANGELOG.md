@@ -1,3 +1,7 @@
+## 3.1.0
+ - Fixed plugin crash upon socket write exception [#10](https://github.com/logstash-plugins/logstash-output-udp/pull/10)
+ - Added support for the 'retry_count' and 'retry_backoff_ms' options [#12](https://github.com/logstash-plugins/logstash-output-udp/pull/12)
+
 ## 3.0.6
   - Docs: Set the default_codec doc attribute.
 

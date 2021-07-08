@@ -54,7 +54,7 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
       logger.error("Failed to send event, message size of #{payload.size} too long", error_hash(e, payload))
     rescue => e
       if @retry_count > 0 && send_count <= @retry_count
-        logger.warn("Failed to send event, retrying:", error_hash(e, payload))
+        logger.warn("Failed to send event, retrying:", error_hash(e, payload, trace: false))
         sleep(@retry_backoff_ms / 1000.0)
         retry
       else
@@ -65,18 +65,13 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
 
   MAX_DEBUG_PAYLOAD = 1000
 
-  def error_hash(error, payload)
-    error_hash = {
-      :error => error.inspect,
-      :backtrace => error.backtrace.first(10)
-    }
+  def error_hash(error, payload, trace: true)
+    error_hash = { :message => error.message, :exception => error.class }
     if logger.debug?
-      error_hash.merge(
-        :event_payload =>
-        payload.length > MAX_DEBUG_PAYLOAD ? "#{payload[0...MAX_DEBUG_PAYLOAD]}...<TRUNCATED>" : payload
-      )
-    else
-      error_hash
+      error_hash[:event_payload] =
+          payload.length > MAX_DEBUG_PAYLOAD ? "#{payload[0...MAX_DEBUG_PAYLOAD]}...<TRUNCATED>" : payload
     end
+    error_hash[:backtrace] = error.backtrace if trace || logger.debug?
+    error_hash
   end
 end

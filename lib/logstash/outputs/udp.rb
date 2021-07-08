@@ -2,17 +2,11 @@
 require "socket"
 require "logstash/outputs/base"
 require "logstash/namespace"
-require 'logstash/plugin_mixins/validator_support/field_reference_validation_adapter'
 
 # Send events over UDP
 #
 # Keep in mind that UDP is a lossy protocol
 class LogStash::Outputs::UDP < LogStash::Outputs::Base
-
-  require 'logstash/outputs/udp/number_or_field_reference_validator'
-
-  extend LogStash::PluginMixins::ValidatorSupport::FieldReferenceValidationAdapter
-  extend NumberOrFieldReferenceValidator
 
   config_name "udp"
   
@@ -22,7 +16,7 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
   config :host, :validate => :string, :required => true
 
   # The port to send messages on
-  config :port, :validate => :number_or_field_reference, :required => true
+  config :port, :validate => :string, :required => true
 
   # The number of times to retry a failed UPD socket write
   config :retry_count, :validate => :number, :default => 0

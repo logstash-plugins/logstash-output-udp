@@ -1,12 +1,19 @@
 # encoding: utf-8
+require "socket"
 require "logstash/outputs/base"
 require "logstash/namespace"
-require "socket"
+require 'logstash/plugin_mixins/validator_support/field_reference_validation_adapter'
 
 # Send events over UDP
 #
 # Keep in mind that UDP is a lossy protocol
 class LogStash::Outputs::UDP < LogStash::Outputs::Base
+
+  require 'logstash/outputs/udp/number_or_field_reference_validator'
+
+  extend LogStash::PluginMixins::ValidatorSupport::FieldReferenceValidationAdapter
+  extend NumberOrFieldReferenceValidator
+
   config_name "udp"
   
   default :codec, "json"
@@ -15,7 +22,7 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
   config :host, :validate => :string, :required => true
 
   # The port to send messages on
-  config :port, :validate => :number, :required => true
+  config :port, :validate => :number_or_field_reference, :required => true
 
   # The number of times to retry a failed UPD socket write
   config :retry_count, :validate => :number, :default => 0
@@ -27,7 +34,14 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
     @socket = UDPSocket.new
 
     @codec.on_event do |event, payload|
-      socket_send(payload)
+      port = event.sprintf(@port)
+      begin
+        port = Integer(port)
+      rescue => e # ArgumentError (invalid value for Integer(): "foo")
+        logger.error("Failed to resolve port, dropping event", port: @port, event: event.to_hash, message: e.message)
+      else
+        socket_send(payload, port)
+      end
     end
   end
 
@@ -37,11 +51,11 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
 
   private
 
-  def socket_send(payload)
+  def socket_send(payload, port)
     send_count = 0
     begin
       send_count += 1
-      @socket.send(payload, 0, @host, @port)
+      @socket.send(payload, 0, @host, port)
     rescue Errno::EMSGSIZE => e
       logger.error("Failed to send event, message size of #{payload.size} too long", error_hash(e, payload))
     rescue => e

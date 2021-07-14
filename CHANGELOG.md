@@ -1,3 +1,6 @@
+## 3.2.0
+ - Added field reference support in `port` [#13](https://github.com/logstash-plugins/logstash-output-udp/pull/13)
+
 ## 3.1.0
  - Fixed plugin crash upon socket write exception [#10](https://github.com/logstash-plugins/logstash-output-udp/pull/10)
  - Added support for the 'retry_count' and 'retry_backoff_ms' options [#12](https://github.com/logstash-plugins/logstash-output-udp/pull/12)

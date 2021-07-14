@@ -1,5 +1,5 @@
 ## 3.2.0
- - Feat: support port => with field reference [#13](https://github.com/logstash-plugins/logstash-output-udp/pull/13)
+ - Added field reference support in `port` [#13](https://github.com/logstash-plugins/logstash-output-udp/pull/13)
 
 ## 3.1.0
  - Fixed plugin crash upon socket write exception [#10](https://github.com/logstash-plugins/logstash-output-udp/pull/10)

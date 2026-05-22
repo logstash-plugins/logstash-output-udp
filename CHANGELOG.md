@@ -1,3 +1,6 @@
+## 3.3.0
+ - Added support for IPv6 addresses
+
 ## 3.2.0
  - Added field reference support in `port` [#13](https://github.com/logstash-plugins/logstash-output-udp/pull/13)
 

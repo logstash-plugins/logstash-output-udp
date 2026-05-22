@@ -31,6 +31,46 @@ describe LogStash::Outputs::UDP do
     end
   end
 
+  context "IP-stack configuration" do
+    matcher :socket_address_family do |expected_flag_name|
+      expected_flag_value = Socket::Constants.const_get(expected_flag_name)
+      match do |actual|
+        actual == expected_flag_value
+      end
+      failure_message do |actual_flag_value|
+        actual_flag_name = Socket::Constants.constants
+                                            .select { |c| c.start_with?("AF_") }
+                                            .find {|c| Socket::Constants.const_get(c) == actual_flag_value } || "UNKNOWN"
+        "expected that #{actual_flag_name}(#{actual_flag_value}) would be equivalent to #{expected_flag_name}(#{expected_flag_value})"
+      end
+    end
+
+    {
+      "::1" => :AF_INET6,
+      "2001:db8:0000:0000:0000:0000:0000:0001" => :AF_INET6,
+      "[2001:db8:0000:0000:0000:0000:0000:0001]" => :AF_INET6,
+      "2001:db8::0001" => :AF_INET6,
+      "[2001:db8::0001]" => :AF_INET6,
+      "127.0.0.1" => :AF_INET,
+      "198.51.100.1" => :AF_INET,
+      "localhost" => (IPAddr.new(IPSocket.getaddress("localhost")).ipv4? ? :AF_INET : :AF_INET6),
+      "example.com" => (IPAddr.new(IPSocket.getaddress("example.com")).ipv4? ? :AF_INET : :AF_INET6),
+    }.each do |specified_host, expected_address_family|
+      context "host => '#{specified_host}'" do
+        let(:host) { specified_host }
+
+        it "creates a UDPSocket with the `#{expected_address_family}` family" do
+          expect(UDPSocket).to receive(:new).and_wrap_original do |original, socket_family|
+            expect(socket_family).to socket_address_family(expected_address_family)
+            original.call(socket_family)
+          end
+
+          subject.register
+        end
+      end
+    end
+  end
+
   describe "port" do
 
     let(:config) { super().merge('port' => '%{[target_port]}') }

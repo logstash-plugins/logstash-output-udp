@@ -25,7 +25,7 @@ class LogStash::Outputs::UDP < LogStash::Outputs::Base
   config :retry_backoff_ms, :validate => :number, :default => 100
 
   def register
-    @socket = UDPSocket.new
+    @socket = UDPSocket.new(IPAddr.new(IPSocket.getaddress(@host)).family)
 
     @codec.on_event do |event, payload|
       port = event.sprintf(@port)
